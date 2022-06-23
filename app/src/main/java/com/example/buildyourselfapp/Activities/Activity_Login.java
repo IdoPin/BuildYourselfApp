@@ -68,9 +68,9 @@ public class Activity_Login extends AppCompatActivity implements View.OnClickLis
                     fAuth.signInWithEmailAndPassword(emailTxt, passwordTxt).addOnSuccessListener(s->{
                         int planTemp = this.userDAL.getCurrentUser().getPlan();
                         if(planTemp==0) {
-                            startActivity(new Intent(Activity_Login.this, Activity_Plan.class));
+                            startActivity(new Intent(Activity_Login.this, Activity_Add_Image.class));
                         }else{
-                            startActivity(new Intent(Activity_Login.this, Activity_Exercise.class));
+                            startActivity(new Intent(Activity_Login.this, Activity_Add_Image.class));
                         }
                     }).addOnFailureListener(f->{
                         Toast.makeText(Activity_Login.this, "email or password incorrect!",

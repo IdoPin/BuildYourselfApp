@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
 
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/icon_img"
@@ -17,6 +16,9 @@
         android:roundIcon="@mipmap/icon_img_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Design.NoActionBar">
+        <activity
+            android:name="com.example.buildyourselfapp.Activities.Activity_Add_Image"
+            android:exported="false" />
         <activity
             android:name="com.example.buildyourselfapp.Activities.Activity_Register"
             android:exported="false" />
@@ -29,7 +31,6 @@
         <activity
             android:name="com.example.buildyourselfapp.Activities.Activity_Exercise"
             android:exported="false" />
-
         <activity
             android:name="com.example.buildyourselfapp.Activities.Activity_template"
             android:exported="false" />

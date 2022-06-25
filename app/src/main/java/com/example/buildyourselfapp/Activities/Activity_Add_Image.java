@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -14,8 +16,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.android.volley.Request;
-import com.android.volley.Response;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -30,6 +32,8 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class Activity_Add_Image extends AppCompatActivity {
@@ -37,7 +41,6 @@ public class Activity_Add_Image extends AppCompatActivity {
     private ImageView cover;
     private FloatingActionButton floatingActionButton;
     private StorageReference storageRef ;
-    private FirebaseAuth auth;
     private Bitmap image_bp;
 
     @Override
@@ -46,7 +49,6 @@ public class Activity_Add_Image extends AppCompatActivity {
         setContentView(R.layout.activity_add_image);
         cover = findViewById(R.id.cover);
         floatingActionButton = findViewById(R.id.floatingActionButton);
-        auth = FirebaseAuth.getInstance();
         storageRef = FirebaseStorage.getInstance().getReference();
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,18 +69,22 @@ public class Activity_Add_Image extends AppCompatActivity {
 
         Uri uri = data.getData();
         cover.setImageURI(uri);
+        Log.d("cover123", cover.toString());
         try {
             image_bp = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-            image_bp = Bitmap.createScaledBitmap(image_bp, image_bp.getWidth(), image_bp.getHeight()
-                    , false);
+          // image_bp = Bitmap.createScaledBitmap(image_bp, image_bp.getWidth(), image_bp.getHeight()
+            //      , false);
+           String sendImgToAPI =  getStringImage(image_bp);
+            Log.d("image_bp8888", sendImgToAPI);
             cover.setImageBitmap(image_bp);
-            upload_img_to_firebase(uri, FirebaseAuth.getInstance().getCurrentUser().getUid());
+            upload_img_to_firebase( FirebaseAuth.getInstance().getCurrentUser().getUid());
         } catch (Exception e) {
             Toast.makeText(Activity_Add_Image.this, "Failed!", Toast.LENGTH_LONG).show();
         }
     }
-    public void upload_img_to_firebase(Uri image_uri, String uid) {
+    public void upload_img_to_firebase( String uid) {
         byte[] img = bitmap_to_bytes();
+        Log.d("byte55555", "upload_img_to_firebase: " + img );
         StorageReference file_ref = storageRef.child("Images/users/" + uid ).child(uid + ".jpg");
         file_ref.putBytes(img).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
@@ -112,8 +118,26 @@ public class Activity_Add_Image extends AppCompatActivity {
             public void onErrorResponse(VolleyError error) {
                 // enjoy your error status
             }
-        });
+
+
+        }){
+            @Override
+            protected Map<String,String> getParams(){
+                Map<String,String> params = new HashMap<>();
+                params.put("image",cover.toString());
+                return params;
+            }
+        };
 
         queue.add(stringRequest);
     }
+
+    public String getStringImage(Bitmap bmp){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        return encodedImage;
+    }
+
 }

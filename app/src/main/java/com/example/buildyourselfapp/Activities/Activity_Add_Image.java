@@ -2,12 +2,14 @@ package com.example.buildyourselfapp.Activities;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -15,12 +17,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.example.buildyourself.R;
 import com.github.dhaval2404.imagepicker.ImagePicker;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -31,64 +27,76 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 
-public class Activity_Add_Image extends AppCompatActivity {
+public class Activity_Add_Image extends AppCompatActivity implements View.OnClickListener {
 
     private ImageView cover;
+    private Button processImageButton, moveToPlanBtn;
     private FloatingActionButton floatingActionButton;
-    private StorageReference storageRef ;
-    private Bitmap image_bp;
+    private StorageReference storageRef;
+    private Bitmap image_bp, afterImage = null;
+    private String image_data;
+    private Boolean enable = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_image);
+
         cover = findViewById(R.id.cover);
         floatingActionButton = findViewById(R.id.floatingActionButton);
-        storageRef = FirebaseStorage.getInstance().getReference();
-        floatingActionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ImagePicker.with(Activity_Add_Image.this)
-                        .crop()	    			//Crop image(Optional), Check Customization for more option
-                        .compress(1024)			//Final image size will be less than 1 MB(Optional)
-                        .maxResultSize(1080, 1080)	//Final image resolution will be less than 1080 x 1080(Optional)
-                        .start();
-            }
-        });
+        moveToPlanBtn = findViewById(R.id.moveToPlanBtn);
+        processImageButton = findViewById(R.id.processImageBtn);
 
+        processImageButton.setOnClickListener(this);
+        moveToPlanBtn.setOnClickListener(this);
+        floatingActionButton.setOnClickListener(this);
+
+        processImageButton.setEnabled(enable);
+        moveToPlanBtn.setEnabled(enable);
+
+        storageRef = FirebaseStorage.getInstance().getReference();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         Uri uri = data.getData();
-        cover.setImageURI(uri);
-        Log.d("cover123", cover.toString());
+
         try {
             image_bp = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-          // image_bp = Bitmap.createScaledBitmap(image_bp, image_bp.getWidth(), image_bp.getHeight()
-            //      , false);
-           String sendImgToAPI =  getStringImage(image_bp);
-            Log.d("image_bp8888", sendImgToAPI);
+            image_data = getStringImage(image_bp);
+
             cover.setImageBitmap(image_bp);
-            upload_img_to_firebase( FirebaseAuth.getInstance().getCurrentUser().getUid());
+            upload_img_to_firebase(image_bp, FirebaseAuth.getInstance().getCurrentUser().getUid(), "before");
         } catch (Exception e) {
             Toast.makeText(Activity_Add_Image.this, "Failed!", Toast.LENGTH_LONG).show();
         }
     }
-    public void upload_img_to_firebase( String uid) {
-        byte[] img = bitmap_to_bytes();
-        Log.d("byte55555", "upload_img_to_firebase: " + img );
-        StorageReference file_ref = storageRef.child("Images/users/" + uid ).child(uid + ".jpg");
+
+    public void upload_img_to_firebase(Bitmap image_bp, String uid, String status) {
+        byte[] img = bitmap_to_bytes(image_bp);
+        Log.d("byte55555", "upload_img_to_firebase: " + img);
+        StorageReference file_ref = storageRef.child("Images/users/" + uid + "-" + status).child(uid + ".jpg");
         file_ref.putBytes(img).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                processImageButton.setEnabled(!enable);
                 Toast.makeText(Activity_Add_Image.this, "Image uploaded successfully!", Toast.LENGTH_LONG).show();
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -98,41 +106,15 @@ public class Activity_Add_Image extends AppCompatActivity {
             }
         });
     }
-    public byte[] bitmap_to_bytes() {
+
+    public byte[] bitmap_to_bytes(Bitmap image_bp) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         image_bp.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         byte[] byteArray = stream.toByteArray();
         return byteArray;
     }
-    public void httpCall(String url) {
 
-        RequestQueue queue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // enjoy your response
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // enjoy your error status
-            }
-
-
-        }){
-            @Override
-            protected Map<String,String> getParams(){
-                Map<String,String> params = new HashMap<>();
-                params.put("image",cover.toString());
-                return params;
-            }
-        };
-
-        queue.add(stringRequest);
-    }
-
-    public String getStringImage(Bitmap bmp){
+    public String getStringImage(Bitmap bmp) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.PNG, 100, baos);
         byte[] imageBytes = baos.toByteArray();
@@ -140,4 +122,77 @@ public class Activity_Add_Image extends AppCompatActivity {
         return encodedImage;
     }
 
+    public void getAfterImage(String data) throws JSONException, IOException {
+        MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+        OkHttpClient client = new OkHttpClient();
+        String url = "https://build-yourself-backend.herokuapp.com/process";
+
+        JSONObject jsonParam = new JSONObject();
+        jsonParam.put("img", data);
+
+        RequestBody body = RequestBody.create(jsonParam.toString(), JSON);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                try (ResponseBody responseBody = response.body()) {
+                    if (!response.isSuccessful())
+                        throw new IOException("Unexpected code " + response);
+
+                    String imageBase64 = responseBody.string();
+
+                    byte[] decodedString = Base64.decode(imageBase64, Base64.DEFAULT);
+                    afterImage = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //method which was problematic and was casing a problem
+                            processImageButton.setEnabled(enable);
+                            moveToPlanBtn.setEnabled(!enable);
+                            cover.setImageBitmap(afterImage);
+                        }
+                    });
+
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.floatingActionButton:
+                ImagePicker.with(Activity_Add_Image.this)
+                        .crop()                    //Crop image(Optional), Check Customization for more option
+                        .compress(1024)            //Final image size will be less than 1 MB(Optional)
+                        .maxResultSize(1080, 1080)    //Final image resolution will be less than 1080 x 1080(Optional)
+                        .start();
+                break;
+            case R.id.processImageBtn:
+                try {
+                    Log.i("After Image", "onClick: Why The Fuck I Am Here?!");
+                    getAfterImage(image_data);
+                    while (afterImage == null) ;
+                    upload_img_to_firebase(afterImage, FirebaseAuth.getInstance().getCurrentUser().getUid(), "after");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    break;
+                }
+            case R.id.moveToPlanBtn:
+                startActivity(new Intent(this, Activity_Plan.class));
+        }
+    }
 }

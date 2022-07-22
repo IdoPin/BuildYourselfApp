@@ -6,23 +6,57 @@
     android:layout_height="match_parent"
     tools:context="com.example.buildyourselfapp.Activities.Activity_Add_Image">
 
-    <ImageView
-        android:id="@+id/cover"
-        android:layout_width="420dp"
-        android:layout_height="434dp"
-        android:foregroundGravity="center"
-        android:scaleType="centerCrop"
-        app:srcCompat="@drawable/upload_image"
-        tools:ignore="MissingConstraints" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="top"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="827dp">
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        app:srcCompat="@drawable/ic_baseline_camera_alt_24"
-        tools:layout_editor_absoluteX="339dp"
-        tools:layout_editor_absoluteY="366dp"
-        tools:ignore="MissingConstraints" />
+        <ImageView
+            android:id="@+id/cover"
+            android:layout_width="420dp"
+            android:layout_height="434dp"
+            android:foregroundGravity="center"
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/upload_image"
+            tools:ignore="MissingConstraints" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/floatingActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            app:srcCompat="@drawable/ic_baseline_camera_alt_24"
+            tools:ignore="MissingConstraints"
+            tools:layout_editor_absoluteX="339dp"
+            tools:layout_editor_absoluteY="366dp" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:foregroundGravity="bottom"
+            android:gravity="bottom"
+            tools:ignore="MissingConstraints">
+
+            <Button
+                android:id="@+id/processImageBtn"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_gravity="bottom|center"
+                android:paddingHorizontal="100dp"
+                android:text="Process" />
+
+            <Button
+                android:id="@+id/moveToPlanBtn"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_below="@+id/processImageBtn"
+                android:layout_gravity="bottom|center"
+                android:paddingHorizontal="100dp"
+                android:text="Move To Plan" />
+        </RelativeLayout>
+    </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
